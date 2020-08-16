@@ -38,6 +38,14 @@ $bundles = array(
 
 
 ### Information
-After running command "app:triggers" bundle will create new table and history in your database. 
+After running command "app:triggers" bundle will create new history table and triggers in your database.
+
 ## For MYSQL
-This bundle will create one history table per normal table with prefix "history_" and 3 triggers on "after insert", "after update and "before delete". 
+- single table with prefix "history_" per entity
+- Trigger on "after insert" per entity with name "history_trigger_after_insert_{{ table_name }}"
+- Trigger on "after update" per entity with name "history_trigger_before_delete_{{ table_name }}"
+- Trigger on "before delete" per entity with name "history_trigger_after_update_{{ table_name }}"
+
+
+### Disable history table for entity
+For disable create history table u must write annotations on ur entity "@DisableHistoryTable". I think this behavior will be best for application becouse u never missing create history table.
