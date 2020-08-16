@@ -1,5 +1,5 @@
 {
-    "name": "yourfrog/symfony-history-table",
+    "name": "yourfrog/symfony-bundle_history-table",
     "description": "Bundle for add history table",
     "authors": [
         {
@@ -8,9 +8,9 @@
         }
     ],
     "require": {
-        "php": ">=7.3"
+        "php": ">=7.2"
 	},
     "autoload": {
-        "psr-4": { "Symfony\\Bundle\\SwiftmailerBundle\\": "" }
-    },
+        "psr-4": { "HistoryTableBundle\\": "" }
+    }
 }
