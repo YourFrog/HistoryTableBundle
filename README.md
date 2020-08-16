@@ -35,3 +35,9 @@ $bundles = array(
 	]
 }
 ```
+
+
+### Information
+After running command "app:triggers" bundle will create new table and history in your database. 
+## For MYSQL
+This bundle will create one history table per normal table with prefix "history_" and 3 triggers on "after insert", "after update and "before delete". 
