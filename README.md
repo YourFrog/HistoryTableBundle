@@ -39,6 +39,7 @@ $bundles = array(
 
 ### Information
 After running command "app:triggers" bundle will create new history table and triggers in your database.
+- This bundle is a safty becouse when u are running multiple times command "app:triggers" this will not crush application on production.
 
 ## For MYSQL
 - single table with prefix "history_" per entity
