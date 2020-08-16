@@ -20,14 +20,14 @@ $bundles = array(
 ```
 
 
-### Step2: Add command to your composer.json unser "scripts" section for example
+### Step2: Add command to your composer.json under "scripts" section for example
 ```json
-    "scripts": {
-        "rebuild": [
-            "php bin/console doctrine:schema:drop --force --full-database",
-            "php bin/console doctrine:schema:update --force",
-            "php bin/console app:triggers",
-            "php bin/console doctrine:fixtures:load --no-interaction"
-        ]
-	}
+"scripts": {
+	"rebuild": [
+	    "php bin/console doctrine:schema:drop --force --full-database",
+	    "php bin/console doctrine:schema:update --force",
+	    "php bin/console app:triggers",
+	    "php bin/console doctrine:fixtures:load --no-interaction"
+	]
+}
 ```
