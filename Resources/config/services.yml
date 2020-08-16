@@ -1,0 +1,24 @@
+# Learn more about services, parameters and containers at
+# http://symfony.com/doc/current/book/service_container.html
+parameters:
+#    parameter_name: value
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  app.bundles.history_table.command.triggers:
+    class: HistoryTableBundle\Command\HistoryTriggersCommand
+    arguments:
+      - "@doctrine.orm.entity_manager"
+      -
+        - "@app.bundles.history_table.executer.mysql"
+
+    tags:
+      - { name: console.command }
+
+  app.bundles.history_table.executer.mysql:
+     class: HistoryTableBundle\Platform\MySQL
+     arguments:
+       - "@doctrine.orm.entity_manager"

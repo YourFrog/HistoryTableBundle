@@ -1,0 +1,16 @@
+{
+    "name": "yourfrog/symfony-history-table",
+    "description": "Bundle for add history table",
+    "authors": [
+        {
+            "name": "Paweł Stelmasiak",
+            "email": "pawel.stelmasiak.91@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.3"
+	},
+    "autoload": {
+        "psr-4": { "Symfony\\Bundle\\SwiftmailerBundle\\": "" }
+    },
+}
