@@ -41,6 +41,7 @@ interface ExecuterInterface
      *  Utworzenie triggerów
      *
      * @param string $class
+     * @param bool $createInsertTrigger
      */
-    public function createTriggers(string $class);
+    public function createTriggers(string $class, bool $createInsertTrigger);
 }

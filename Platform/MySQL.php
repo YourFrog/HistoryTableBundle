@@ -57,9 +57,12 @@ class MySQL implements ExecuterInterface
     /**
      * @inheritDoc
      */
-    public function createTriggers(string $class)
+    public function createTriggers(string $class, bool $createInsertTrigger)
     {
-        $this->createAfterInsertTrigger($class);
+        if( $createInsertTrigger ) {
+            $this->createAfterInsertTrigger($class);
+        }
+
         $this->createAfterUpdateTrigger($class);
         $this->createBeforeDeleteTrigger($class);
     }

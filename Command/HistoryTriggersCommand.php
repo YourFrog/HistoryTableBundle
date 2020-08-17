@@ -55,6 +55,7 @@ class HistoryTriggersCommand extends Command
     protected function configure()
     {
         $this->setDescription('Create history triggers');
+        $this->addArgument('enable-insert', InputArgument::OPTIONAL, 'Create trigger on insert operation', false);
     }
 
     /**
@@ -85,6 +86,8 @@ class HistoryTriggersCommand extends Command
         $classes = $this->getClasses();
         $executer = $this->getExecuter();
 
+        $isCreateInsertTriggers = (bool) $input->getArgument('enable-insert');
+
         foreach($classes as $class) {
             $output->writeln('Table: ' . $executer->getTablename($class), OutputInterface::VERBOSITY_VERBOSE);
 
@@ -108,7 +111,7 @@ class HistoryTriggersCommand extends Command
             $executer->createHistoryTable($class);
 
             $output->writeln("\t- Create history triggers", OutputInterface::VERBOSITY_VERBOSE);
-            $executer->createTriggers($class);
+            $executer->createTriggers($class, $isCreateInsertTriggers);
         }
 
         return 0;
