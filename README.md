@@ -1,6 +1,6 @@
 ### Support database
 - MySQL - Completed
-- Postgresql - in the futures
+- Postgresql - Completed
 
 ### Step 1: Use composer and enable Bundle
 
