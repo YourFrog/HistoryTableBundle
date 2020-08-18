@@ -7,15 +7,16 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQL80Platform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- *  Obsługa tabel historycznych dla platformy MySQL
+ *  Obsługa tabel historycznych dla bazy danych postgresql
  *
  * @package HistoryTableBundle\Platform
  */
-class MySQL implements ExecuterInterface
+class Postgresql implements ExecuterInterface
 {
     /**
      * @var EntityManagerInterface
@@ -37,7 +38,7 @@ class MySQL implements ExecuterInterface
      */
     public function isSupported(AbstractPlatform $platform)
     {
-        return $platform instanceof MySqlPlatform;
+        return $platform instanceof PostgreSqlPlatform;
     }
 
     /**
@@ -45,7 +46,8 @@ class MySQL implements ExecuterInterface
      */
     public function createSchema(): void
     {
-        /* MySQL doesn't have schema */
+        $query = 'CREATE SCHEMA IF NOT EXISTS history;';
+        $this->entityManager->getConnection()->exec($query);
     }
 
     /**
@@ -56,7 +58,7 @@ class MySQL implements ExecuterInterface
         $name = $this->getTableName($class);
         $historyName = $this->getHistoryTableName($class);
 
-        $createTableQuery = 'CREATE TABLE IF NOT EXISTS ' . $historyName . ' (history_create_at TEXT, history_operation TEXT, history_db_user TEXT) SELECT * FROM ' . $name . ' LIMIT 0;';
+        $createTableQuery = 'CREATE TABLE IF NOT EXISTS ' . $historyName . ' (history_create_at timestamp with time zone, history_operation TEXT, history_db_user TEXT, LIKE ' . $name . ')';
 
         $this->entityManager->getConnection()->exec($createTableQuery);
     }
@@ -70,7 +72,7 @@ class MySQL implements ExecuterInterface
      */
     private function getHistoryTableName(string $class): string
     {
-        return 'history_' . $this->getTableName($class);
+        return 'history.' . str_replace('.', '_', $this->getTableName($class));
     }
 
     /**
@@ -98,9 +100,12 @@ class MySQL implements ExecuterInterface
      *
      * @return string
      */
-    function getTableName(string $class): string
+    public function getTableName(string $class): string
     {
-        return $this->entityManager->getClassMetadata($class)->getTableName();
+        $metadata = $this->entityManager->getClassMetadata($class);
+        $schema = $metadata->getSchemaName() ?? 'public';
+
+        return $schema . '.' . $metadata->getTableName();
     }
 
     /**
@@ -112,14 +117,9 @@ class MySQL implements ExecuterInterface
         $historyName = $this->getHistoryTableName($class);
         $primaryKey = $this->getPrimaryKey($class);
 
-        $afterInsert = "
-CREATE
-TRIGGER IF NOT EXISTS `history_trigger_after_insert_" . $name . "`
-AFTER INSERT ON `" . $name . "`
-FOR EACH ROW INSERT INTO " . $historyName . " SELECT NOW() AS create_at, 'AFTER-INSERT' AS operation, USER() AS db_user, " . $name . ".* FROM " . $name . " WHERE " . $primaryKey . " = NEW." . $primaryKey . ";
-";
-
-        $this->entityManager->getConnection()->exec($afterInsert);
+        $this->createTriggerFunction('insert', 'NEW');
+        $this->dropTrigger($name, 'insert');
+        $this->bindTrigger($name, 'insert', 'after');
     }
 
     /**
@@ -131,14 +131,10 @@ FOR EACH ROW INSERT INTO " . $historyName . " SELECT NOW() AS create_at, 'AFTER-
         $historyName = $this->getHistoryTableName($class);
         $primaryKey = $this->getPrimaryKey($class);
 
-        $beforeDelete = "
-CREATE
-TRIGGER IF NOT EXISTS `history_trigger_before_delete_" . $name . "`
-BEFORE DELETE ON `" . $name . "`
-FOR EACH ROW INSERT INTO " . $historyName . " SELECT NOW() AS create_at, 'BEFORE-DELETE' AS operation, USER() AS db_user, " . $name . ".* FROM " . $name . " WHERE " . $primaryKey . " = OLD." . $primaryKey . ";
-";
 
-        $this->entityManager->getConnection()->exec($beforeDelete);
+        $this->createTriggerFunction('delete', 'OLD');
+        $this->dropTrigger($name, 'delete');
+        $this->bindTrigger($name, 'delete', 'before');
     }
 
     /**
@@ -150,14 +146,43 @@ FOR EACH ROW INSERT INTO " . $historyName . " SELECT NOW() AS create_at, 'BEFORE
         $historyName = $this->getHistoryTableName($class);
         $primaryKey = $this->getPrimaryKey($class);
 
-        $afterUpdate = "
-CREATE
-TRIGGER IF NOT EXISTS `history_trigger_after_update_" . $name . "`
-AFTER UPDATE ON `" . $name . "`
-FOR EACH ROW INSERT INTO " . $historyName . " SELECT NOW() AS create_at, 'AFTER-UPDATE' AS operation, USER() AS db_user, " . $name . ".* FROM " . $name . " WHERE " . $primaryKey . " = NEW." . $primaryKey . ";
-";
 
-        $this->entityManager->getConnection()->exec($afterUpdate);
+        $this->createTriggerFunction('update', 'OLD');
+        $this->dropTrigger($name, 'update');
+        $this->bindTrigger($name, 'update', 'after');
     }
 
+    private function createTriggerFunction(string $operation, $recordType)
+    {
+        $triggerQuery = "
+    CREATE OR REPLACE FUNCTION history.trigger_" . $operation . "() RETURNS trigger AS 
+    \$BODY\$
+    BEGIN
+        EXECUTE 'INSERT INTO history.' || TG_TABLE_SCHEMA || '_' || TG_TABLE_NAME || ' SELECT $1, $2, $3, $4.*' USING NOW(), TG_OP, current_user, " . $recordType . ";
+        
+        RETURN " . $recordType . ";
+    END;
+    \$BODY\$
+    LANGUAGE plpgsql;
+";
+
+        $this->entityManager->getConnection()->exec($triggerQuery);
+    }
+
+    private function dropTrigger($tableName, string $operation)
+    {
+        $query = 'DROP TRIGGER IF EXISTS history_' . $operation . ' on ' . $tableName . ';';
+        $this->entityManager->getConnection()->exec($query);
+    }
+
+    private function bindTrigger($tableName, string $operation, string $when = '')
+    {
+        $query = '
+CREATE TRIGGER history_' . $operation . '
+' . $when . ' ' . $operation . ' ON ' . $tableName . '
+FOR EACH ROW EXECUTE PROCEDURE history.trigger_' . $operation . '();
+        ';
+
+        $this->entityManager->getConnection()->exec($query);
+    }
 }

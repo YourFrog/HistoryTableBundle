@@ -88,6 +88,7 @@ class HistoryTriggersCommand extends Command
 
         $isCreateInsertTriggers = (bool) $input->getArgument('enable-insert');
 
+        $executer->createSchema();
         foreach($classes as $class) {
             $output->writeln('Table: ' . $executer->getTablename($class), OutputInterface::VERBOSITY_VERBOSE);
 
@@ -110,8 +111,16 @@ class HistoryTriggersCommand extends Command
             $output->writeln("\t- Create history table", OutputInterface::VERBOSITY_VERBOSE);
             $executer->createHistoryTable($class);
 
-            $output->writeln("\t- Create history triggers", OutputInterface::VERBOSITY_VERBOSE);
-            $executer->createTriggers($class, $isCreateInsertTriggers);
+            if( $isCreateInsertTriggers ) {
+                $output->writeln("\t- Create insert history triggers", OutputInterface::VERBOSITY_VERBOSE);
+                $executer->createAfterInsertTrigger($class);
+            }
+
+            $output->writeln("\t- Create before history triggers", OutputInterface::VERBOSITY_VERBOSE);
+            $executer->createBeforeDeleteTrigger($class);
+
+            $output->writeln("\t- Create update history triggers", OutputInterface::VERBOSITY_VERBOSE);
+            $executer->createAfterUpdateTrigger($class);
         }
 
         return 0;

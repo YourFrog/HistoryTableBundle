@@ -19,7 +19,7 @@ interface ExecuterInterface
      *
      * @return bool
      */
-    public function isSupported(AbstractPlatform $platform);
+    function isSupported(AbstractPlatform $platform);
 
     /**
      *  Utworzenie nazwy tabeli
@@ -31,17 +31,37 @@ interface ExecuterInterface
     function getTableName(string $class): string;
 
     /**
+     *  Utworzenie schematu jeśli dana baza go obsługuje
+     *
+     * @return void
+     */
+    function createSchema(): void;
+
+    /**
      *  Utworzenie tabeli historycznej
      *
      * @param string $class
      */
-    public function createHistoryTable(string $class);
+    function createHistoryTable(string $class);
 
     /**
-     *  Utworzenie triggerów
+     *  Dodanie trigger'a na dodawanie danych
      *
      * @param string $class
-     * @param bool $createInsertTrigger
      */
-    public function createTriggers(string $class, bool $createInsertTrigger);
+    function createAfterInsertTrigger(string $class);
+
+    /**
+     *  Dodanie trigger'a na aktualizacje danych
+     *
+     * @param string $class
+     */
+    function createAfterUpdateTrigger(string $class);
+
+    /**
+     *  Dodanie trigger'a na usuwanie danych
+     *
+     * @param string $class
+     */
+    function createBeforeDeleteTrigger(string $class);
 }

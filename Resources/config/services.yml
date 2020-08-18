@@ -14,11 +14,17 @@ services:
       - "@doctrine.orm.entity_manager"
       -
         - "@app.bundles.history_table.executer.mysql"
+        - "@app.bundles.history_table.executer.postgresql"
 
     tags:
       - { name: console.command }
 
   app.bundles.history_table.executer.mysql:
      class: HistoryTableBundle\Platform\MySQL
+     arguments:
+       - "@doctrine.orm.entity_manager"
+
+  app.bundles.history_table.executer.postgresql:
+     class: HistoryTableBundle\Platform\Postgresql
      arguments:
        - "@doctrine.orm.entity_manager"
