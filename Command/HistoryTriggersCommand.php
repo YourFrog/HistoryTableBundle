@@ -105,7 +105,7 @@ class HistoryTriggersCommand extends Command
             if( $reader->getClassAnnotation($reflection, Annotation\DisableHistoryTable::class) !== null ) {
                 // This entity has disable history table
                 $output->writeln("\t- History table is disabled", OutputInterface::VERBOSITY_VERBOSE);
-                return;
+                continue;
             }
 
             $output->writeln("\t- Create history table", OutputInterface::VERBOSITY_VERBOSE);
